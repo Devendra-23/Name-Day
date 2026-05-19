@@ -196,7 +196,8 @@ function GiftBox({ onClick }: { onClick: () => void }) {
       ref={groupRef}
       onClick={onClick}
       scale={1.35 * mobileScale}
-      style={{ cursor: "pointer" }}
+      onPointerOver={() => (document.body.style.cursor = "pointer")}
+      onPointerOut={() => (document.body.style.cursor = "auto")}
     >
       <mesh position={[0, -0.2, 0]}>
         <boxGeometry args={[1.1, 0.9, 1.1]} />
@@ -351,6 +352,7 @@ function ProceduralFlowerVase() {
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
+
     return texture;
   }, []);
 
