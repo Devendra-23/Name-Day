@@ -5,10 +5,9 @@ import { Gift, Volume2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import * as THREE from "three";
 
-// IMPORT YOUR AESTHETIC BACKGROUND IMAGE HERE
 import flowerBg from "./assets/flowers.png";
 
-// --- 1. RESPONSIVE 3D SCALING HOOK ---
+// --- 1. RESPONSIVE HOOK ---
 function useMobileScale() {
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -20,7 +19,7 @@ function useMobileScale() {
   return scale;
 }
 
-// --- 2. SVG OVERLAY (Background 2D Petals) ---
+// --- 2. SVG OVERLAY ---
 function FloatingSVGOverlay() {
   return (
     <svg
@@ -44,64 +43,20 @@ function FloatingSVGOverlay() {
           <stop offset="0%" stopColor="#f9a8d4" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.6" />
         </linearGradient>
-        <filter id="blur-heavy" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="8" />
-        </filter>
-        <g id="bg-petal">
-          <path
-            d="M0,0 C12,-15 30,-10 40,5 C30,20 12,25 0,0 Z"
-            fill="url(#petal-grad)"
-          />
-        </g>
-        <g id="bg-petal-pink">
-          <path
-            d="M0,0 C12,-15 30,-10 40,5 C30,20 12,25 0,0 Z"
-            fill="url(#pink-petal-grad)"
-          />
-        </g>
       </defs>
-      <style>
-        {`
-          .wind-layer-1 { animation: drift 45s linear infinite; }
-          .wind-layer-2 { animation: drift-fast 25s linear infinite; }
-          .sway { animation: sway 5s ease-in-out infinite alternate; }
-          .sway-delayed { animation: sway 7s ease-in-out infinite alternate -3s; }
-          .sway-fast { animation: sway 4s ease-in-out infinite alternate -1s; }
-          @keyframes drift {
-            0% { transform: translate(10%, 110%) rotate(0deg); }
-            100% { transform: translate(-20%, -30%) rotate(180deg); }
-          }
-          @keyframes drift-fast {
-            0% { transform: translate(20%, 120%) rotate(45deg); }
-            100% { transform: translate(-30%, -20%) rotate(-90deg); }
-          }
-          @keyframes sway {
-            0% { transform: rotate(-12deg); }
-            100% { transform: rotate(12deg); }
-          }
-        `}
-      </style>
-      <g className="wind-layer-1">
-        <use
-          href="#bg-petal"
-          x="1500"
-          y="900"
-          transform="scale(1.2)"
-          className="sway"
-        />
+      <g style={{ animation: "sway 5s ease-in-out infinite alternate" }}>
+        <use href="#bg-petal" x="1500" y="900" transform="scale(1.2)" />
         <use
           href="#bg-petal-pink"
           x="800"
           y="700"
           transform="scale(0.9) rotate(70)"
-          className="sway-delayed"
         />
         <use
           href="#bg-petal"
           x="1100"
           y="400"
           transform="scale(1.5) rotate(-30)"
-          className="sway"
         />
         <use
           href="#bg-petal-pink"
@@ -109,93 +64,45 @@ function FloatingSVGOverlay() {
           y="850"
           transform="scale(1.4) rotate(180)"
         />
-        <use
-          href="#bg-petal"
-          x="1800"
-          y="650"
-          transform="scale(1) rotate(90)"
-          className="sway-delayed"
-        />
-        <use
-          href="#bg-petal-pink"
-          x="300"
-          y="300"
-          transform="scale(1.1) rotate(-10)"
-          className="sway"
-        />
-        <use
-          href="#bg-petal"
-          x="1400"
-          y="150"
-          transform="scale(1.8) rotate(200)"
-        />
-      </g>
-      <g filter="url(#blur-heavy)" className="wind-layer-2" opacity="0.8">
-        <use
-          href="#bg-petal"
-          x="900"
-          y="950"
-          transform="scale(4) rotate(-60)"
-          className="sway"
-        />
-        <use
-          href="#bg-petal-pink"
-          x="1700"
-          y="800"
-          transform="scale(5) rotate(15)"
-          className="sway-delayed"
-        />
-        <use
-          href="#bg-petal"
-          x="100"
-          y="500"
-          transform="scale(5) rotate(110)"
-        />
       </g>
     </svg>
   );
 }
 
 // --- 3. FLOATING 3D PETALS ---
-function FallingPetals3D({ count = 60, color = "#f472b6" }) {
+function FallingPetals3D({ count = 40, color = "#f472b6" }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-
-  const petalGeometry = useMemo(() => {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.quadraticCurveTo(0.2, 0.4, 0.1, 0.8);
-    shape.quadraticCurveTo(0, 1.0, -0.1, 0.8);
-    shape.quadraticCurveTo(-0.2, 0.4, 0, 0);
-    return new THREE.ExtrudeGeometry(shape, {
-      depth: 0.02,
-      bevelEnabled: true,
-      bevelSize: 0.01,
-      bevelThickness: 0.01,
-      bevelSegments: 2,
-    });
-  }, []);
+  const petalGeometry = useMemo(
+    () =>
+      new THREE.ExtrudeGeometry(
+        new THREE.Shape()
+          .moveTo(0, 0)
+          .quadraticCurveTo(0.2, 0.4, 0.1, 0.8)
+          .quadraticCurveTo(0, 1.0, -0.1, 0.8)
+          .quadraticCurveTo(-0.2, 0.4, 0, 0),
+        {
+          depth: 0.02,
+          bevelEnabled: true,
+          bevelSize: 0.01,
+          bevelThickness: 0.01,
+        }
+      ),
+    []
+  );
 
   const petals = useMemo(() => {
-    const temp = [];
-    for (let i = 0; i < count; i++) {
-      temp.push({
-        pos: new THREE.Vector3(
-          (Math.random() - 0.5) * 15,
-          Math.random() * 15 - 5,
-          (Math.random() - 0.5) * 10 - 2
-        ),
-        rot: new THREE.Euler(
-          Math.random() * Math.PI,
-          Math.random() * Math.PI,
-          0
-        ),
-        speed: 0.01 + Math.random() * 0.015,
-        rotSpeed: (Math.random() - 0.5) * 0.02,
-        factor: Math.random() * 100,
-      });
-    }
-    return temp;
+    return Array.from({ length: count }, () => ({
+      pos: new THREE.Vector3(
+        (Math.random() - 0.5) * 15,
+        Math.random() * 15 - 5,
+        (Math.random() - 0.5) * 10 - 2
+      ),
+      rot: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0),
+      speed: 0.008 + Math.random() * 0.014,
+      rotSpeed: (Math.random() - 0.5) * 0.02,
+      factor: Math.random() * 100,
+    }));
   }, [count]);
 
   useFrame(() => {
@@ -205,12 +112,10 @@ function FallingPetals3D({ count = 60, color = "#f472b6" }) {
       p.pos.x += Math.sin(p.pos.y * 2 + p.factor) * 0.005;
       p.rot.x += p.rotSpeed;
       p.rot.y += p.rotSpeed;
-
       if (p.pos.y < -5) {
         p.pos.y = 10;
         p.pos.x = (Math.random() - 0.5) * 15;
       }
-
       dummy.position.copy(p.pos);
       dummy.rotation.copy(p.rot);
       dummy.scale.setScalar(0.15 + Math.sin(p.factor) * 0.05);
@@ -231,7 +136,35 @@ function FallingPetals3D({ count = 60, color = "#f472b6" }) {
   );
 }
 
-// --- 4. 3D ROTATING GIFT BOX ---
+// --- 4. GIFT BOX WITH STARS ---
+function BoxStar({ position, rotation = [0, 0, 0] }: any) {
+  const starGeometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape
+      .moveTo(0, 0.05)
+      .lineTo(0.012, 0.015)
+      .lineTo(0.05, 0.015)
+      .lineTo(0.02, -0.008)
+      .lineTo(0.032, -0.045)
+      .lineTo(0, -0.022)
+      .lineTo(-0.032, -0.045)
+      .lineTo(-0.02, -0.008)
+      .lineTo(-0.05, 0.015)
+      .lineTo(-0.012, 0.015)
+      .lineTo(0, 0.05);
+    return new THREE.ExtrudeGeometry(shape, {
+      depth: 0.01,
+      bevelEnabled: false,
+    });
+  }, []);
+  return (
+    <mesh position={position} rotation={rotation}>
+      <primitive object={starGeometry} attach="geometry" />
+      <meshStandardMaterial color="#fbbf24" metalness={0.8} roughness={0.1} />
+    </mesh>
+  );
+}
+
 function GiftBox({ onClick }: { onClick: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const mobileScale = useMobileScale();
@@ -240,55 +173,66 @@ function GiftBox({ onClick }: { onClick: () => void }) {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.012;
       groupRef.current.position.y =
-        -0.4 + Math.sin(state.clock.getElapsedTime() * 1.8) * 0.12;
+        (mobileScale < 1 ? -0.1 : -0.3) +
+        Math.sin(state.clock.getElapsedTime() * 1.8) * 0.12;
     }
   });
+
+  const starPlacements = useMemo(() => {
+    const p = [];
+    for (let i = 0; i < 18; i++) {
+      const rx = (Math.random() - 0.5) * 0.9;
+      const ry = (Math.random() - 0.5) * 0.7 - 0.2;
+      if (Math.abs(rx) > 0.1) {
+        p.push({ pos: [rx, ry, 0.555], rot: [0, 0, Math.random()] });
+        p.push({ pos: [rx, ry, -0.555], rot: [0, Math.PI, Math.random()] });
+      }
+    }
+    return p;
+  }, []);
 
   return (
     <group
       ref={groupRef}
       onClick={onClick}
-      scale={1.4 * mobileScale}
+      scale={1.35 * mobileScale}
       style={{ cursor: "pointer" }}
     >
       <mesh position={[0, -0.2, 0]}>
         <boxGeometry args={[1.1, 0.9, 1.1]} />
-        <meshStandardMaterial color="#2563eb" roughness={0.2} metalness={0.1} />
+        <meshStandardMaterial color="#1d2a44" roughness={0.3} />
       </mesh>
       <mesh position={[0, 0.3, 0]}>
         <boxGeometry args={[1.16, 0.22, 1.16]} />
-        <meshStandardMaterial color="#1d4ed8" roughness={0.2} />
+        <meshStandardMaterial color="#2a3c5a" roughness={0.3} />
       </mesh>
       <mesh position={[0, 0.26, 0]}>
         <boxGeometry args={[1.2, 0.24, 0.15]} />
-        <meshStandardMaterial color="#fbbf24" metalness={0.6} roughness={0.2} />
+        <meshStandardMaterial color="#fbbf24" metalness={0.7} roughness={0.1} />
       </mesh>
       <mesh position={[0, 0.26, 0]}>
         <boxGeometry args={[0.15, 0.24, 1.2]} />
-        <meshStandardMaterial color="#fbbf24" metalness={0.6} roughness={0.2} />
+        <meshStandardMaterial color="#fbbf24" metalness={0.7} roughness={0.1} />
       </mesh>
+      {starPlacements.map((s, i) => (
+        <BoxStar key={i} position={s.pos as any} rotation={s.rot as any} />
+      ))}
     </group>
   );
 }
 
-// --- 5. FIXED 3D ROSE (TRIMMED INTERNAL STEM) ---
+// --- 5. DETAILED 3D FLOWERS ---
 function PremiumRose({
   position,
   color,
   rotation = [0, 0, 0],
   scale = 1,
-}: {
-  position: [number, number, number];
-  color: string;
-  rotation?: [number, number, number];
-  scale?: number;
-}) {
+}: any) {
   return (
     <group position={position} rotation={rotation} scale={scale}>
-      {/* FIXED: Trimmed stem cylinder length from 0.8 down to 0.15 so it stays completely hidden inside the bouquet cluster */}
-      <mesh position={[0, -0.08, 0]}>
-        <cylinderGeometry args={[0.015, 0.018, 0.15, 8]} />
-        <meshStandardMaterial color="#14532d" roughness={0.9} />
+      <mesh position={[0, -0.05, 0]}>
+        <cylinderGeometry args={[0.015, 0.018, 0.01, 8]} />
+        <meshStandardMaterial color="#14532d" />
       </mesh>
       <mesh position={[0, 0.02, 0]}>
         <sphereGeometry args={[0.12, 16, 16]} />
@@ -323,21 +267,11 @@ function PremiumRose({
   );
 }
 
-// --- 6. FIXED 3D LILY (TRIMMED INTERNAL STEM) ---
-function PremiumLily({
-  position,
-  rotation = [0, 0, 0],
-  scale = 1,
-}: {
-  position: [number, number, number];
-  rotation?: [number, number, number];
-  scale?: number;
-}) {
+function PremiumLily({ position, rotation = [0, 0, 0], scale = 1 }: any) {
   return (
     <group position={position} rotation={rotation} scale={scale}>
-      {/* FIXED: Trimmed base stem cylinder from 0.9 down to 0.15 so it can never poke through the vase walls */}
-      <mesh position={[0, -0.08, 0]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.15, 8]} />
+      <mesh position={[0, -0.05, 0]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.01, 8]} />
         <meshStandardMaterial color="#166534" roughness={0.8} />
       </mesh>
       {Array.from({ length: 5 }).map((_, i) => (
@@ -371,46 +305,14 @@ function PremiumLily({
   );
 }
 
-// --- 7. VASE RIBBON ---
-function RibbonOnVase({
-  position,
-  color,
-  rotation = [0, 0, 0],
-}: {
-  position: [number, number, number];
-  color: string;
-  rotation?: [number, number, number];
-}) {
-  const ribbonPoints = useMemo(() => {
-    const points = [];
-    points.push(new THREE.Vector2(0.32, 0));
-    points.push(new THREE.Vector2(0.33, 0.08));
-    return points;
-  }, []);
-  return (
-    <group position={position} rotation={rotation}>
-      <mesh>
-        <latheGeometry args={[ribbonPoints, 64]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.2}
-          metalness={0.4}
-          clearcoat={0.3}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-// --- 8. SHINY GOLD VASE (CLEAN LIGHTING REFLECTIONS) ---
+// --- 6. SHINY GOLD VASE WITH ENGRAVED BOTTOM CAP TEXTURE ---
 function ProceduralFlowerVase() {
   const groupRef = useRef<THREE.Group>(null);
   const mobileScale = useMobileScale();
 
   useFrame((state) => {
-    if (groupRef.current) {
+    if (groupRef.current)
       groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.15;
-    }
   });
 
   const vasePoints = useMemo(() => {
@@ -427,119 +329,155 @@ function ProceduralFlowerVase() {
     return points;
   }, []);
 
+  // PROCEDURAL CANVAS TEXTURE GENERATOR FOR THE INSCRIPTION NOTE
+  const signatureTexture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      // Background base gold coating alignment match
+      ctx.fillStyle = "#FFD700";
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Stylized Script Message Layout
+      ctx.font = "italic bold 32px 'Cormorant Garamond', serif";
+      ctx.fillStyle = "#1d2a44"; // Honeymoon Navy contrast tone
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Made with love", 256, 230);
+      ctx.fillText("from Devvyyy", 256, 282);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    return texture;
+  }, []);
+
   return (
     <group
       ref={groupRef}
-      position={[0, mobileScale < 1 ? -1.8 : -1.4, 0]}
-      scale={mobileScale * 1.1}
+      position={[0, mobileScale < 1 ? -1.35 : -1.45, 0]}
+      scale={mobileScale * 1.05}
     >
-      {/* SHINY GOLD VASE */}
-      <mesh position={[0, 0, 0]} castShadow>
+      {/* Main Lathe Vase Frame */}
+      <mesh castShadow>
         <latheGeometry args={[vasePoints, 64]} />
         <meshPhysicalMaterial
           color="#FFD700"
           metalness={0.99}
           roughness={0.03}
           clearcoat={1.0}
-          clearcoatRoughness={0.0}
           envMapIntensity={1.0}
         />
       </mesh>
 
-      <RibbonOnVase position={[0, 1.25, 0]} color="#1e3a8a" />
+      {/* SEALED CAP BOTTOM WITH SIGNATURE TEXTURE OVERLAY MAPPED INSIDE */}
+      <mesh position={[0, 0.002, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.35, 64]} />
+        <meshStandardMaterial
+          map={signatureTexture}
+          metalness={0.6}
+          roughness={0.15}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
 
-      {/* --- THE BOUQUET (STEMS RENDERED SAFELY INSIDE THE MASS) --- */}
-      <PremiumLily position={[0, 1.5, 0]} scale={1.3} />
+      <PremiumLily position={[0, 1.6, 0]} scale={1.3} />
       <PremiumLily
-        position={[-0.4, 1.3, 0.3]}
-        rotation={[0.2, 0, 0.3]}
+        position={[-0.2, 1.45, 0.15]}
+        rotation={[0.3, 1, 0.2]}
         scale={1.1}
       />
       <PremiumLily
-        position={[0.4, 1.3, -0.3]}
-        rotation={[-0.2, 0, -0.3]}
+        position={[0.2, 1.45, -0.15]}
+        rotation={[-0.3, -1, -0.2]}
         scale={1.1}
-      />
-      <PremiumLily
-        position={[0, 1.1, -0.6]}
-        rotation={[0.4, 3, 0]}
-        scale={0.9}
       />
 
       <PremiumRose
-        position={[0.1, 1.6, 0.4]}
+        position={[0.15, 1.6, 0.2]}
         color="#b91c1c"
-        rotation={[0.1, 0, -0.1]}
+        rotation={[0.3, 0.5, 0]}
         scale={1.2}
       />
       <PremiumRose
-        position={[-0.35, 1.4, -0.35]}
+        position={[-0.15, 1.6, -0.2]}
         color="#9f1239"
-        rotation={[0.2, 1, 0]}
+        rotation={[-0.3, 2, 0]}
         scale={1.1}
       />
       <PremiumRose
-        position={[0.4, 1.25, 0.3]}
+        position={[0.2, 1.5, -0.1]}
         color="#e11d48"
-        rotation={[-0.1, -1, 0.2]}
+        rotation={[-0.2, -0.5, 0.2]}
+        scale={1.2}
+      />
+
+      <PremiumRose
+        position={[-0.25, 1.4, 0.2]}
+        color="#b91c1c"
+        rotation={[0.5, 1, 0.2]}
         scale={1.1}
       />
-      <PremiumRose position={[-0.45, 1.25, 0.1]} color="#f43f5e" scale={0.9} />
       <PremiumRose
-        position={[0.25, 1.35, -0.45]}
-        color="#f43f5e"
-        rotation={[-0.2, -0.5, -0.1]}
-        scale={1.0}
+        position={[0.25, 1.4, 0.2]}
+        color="#9f1239"
+        rotation={[0.5, -1, -0.2]}
+        scale={1.1}
       />
       <PremiumRose
-        position={[0.5, 1.1, 0.1]}
-        color="#b91c1c"
-        rotation={[0.3, -1.2, 0.1]}
-      />
-      <PremiumRose
-        position={[0, 1.0, 0.7]}
-        color="#f43f5e"
+        position={[0, 1.4, 0.25]}
+        color="#e11d48"
         rotation={[0.6, 0, 0]}
-        scale={0.8}
+        scale={1.1}
       />
       <PremiumRose
-        position={[-0.1, 1.2, -0.7]}
-        color="#fb7185"
-        rotation={[0.2, 2.5, -0.1]}
-        scale={1.0}
-      />
-      <PremiumRose
-        position={[0.3, 1.05, -0.6]}
-        color="#fb7185"
-        rotation={[0.5, -2, 0]}
-        scale={0.9}
-      />
-      <PremiumRose
-        position={[-0.5, 0.9, -0.2]}
-        color="#fb923c"
-        rotation={[0.7, 1.5, 0.1]}
+        position={[0, 1.4, -0.25]}
+        color="#b91c1c"
+        rotation={[-0.6, 0, 0]}
         scale={1.1}
       />
 
-      {/* Decorative leaf filler assets */}
-      {Array.from({ length: 14 }).map((_, i) => {
-        const angle = i * ((Math.PI * 2) / 14);
+      <PremiumRose
+        position={[0.3, 1.3, 0]}
+        color="#e11d48"
+        rotation={[0, 0, -0.7]}
+        scale={1.1}
+      />
+      <PremiumRose
+        position={[-0.3, 1.3, 0]}
+        color="#b91c1c"
+        rotation={[0, 0, 0.7]}
+        scale={1.1}
+      />
+      <PremiumRose
+        position={[0.15, 1.3, 0.3]}
+        color="#9f1239"
+        rotation={[0.7, -0.5, 0]}
+        scale={1.1}
+      />
+      <PremiumRose
+        position={[-0.15, 1.3, 0.3]}
+        color="#e11d48"
+        rotation={[0.7, 0.5, 0]}
+        scale={1.1}
+      />
+
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = i * ((Math.PI * 2) / 12);
         return (
           <mesh
-            key={`leaf-${i}`}
+            key={i}
             position={[
-              Math.sin(angle) * (0.4 + Math.random() * 0.15),
-              1.0 + Math.random() * 0.3,
-              Math.cos(angle) * (0.4 + Math.random() * 0.15),
+              Math.sin(angle) * 0.25,
+              1.2 + Math.random() * 0.2,
+              Math.cos(angle) * 0.25,
             ]}
-            rotation={[
-              0.7 + Math.random() * 0.2,
-              angle + Math.PI / 2,
-              Math.random() * 0.3,
-            ]}
+            rotation={[0.8, angle + Math.PI / 2, 0]}
           >
             <boxGeometry args={[0.15, 0.6, 0.015]} />
-            <meshStandardMaterial color="#14532d" roughness={0.7} />
+            <meshStandardMaterial color="#14532d" />
           </mesh>
         );
       })}
@@ -547,42 +485,56 @@ function ProceduralFlowerVase() {
   );
 }
 
-// --- 9. MASTER APPLICATION ---
+// --- 7. MAIN APPLICATION ---
 export default function App() {
   const [stage, setStage] = useState<"intro" | "revealed">("intro");
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [audioEnded, setAudioEnded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleOpenGift = () => {
     setStage("revealed");
+    setAudioEnded(false);
     audioRef.current = new Audio("/message.mp3");
-    audioRef.current.play().catch((e) => console.log("Audio waiting: ", e));
+    audioRef.current.onended = () => setAudioEnded(true);
+    audioRef.current.play().catch(console.error);
     confetti({ particleCount: 150, spread: 85, origin: { y: 0.55 } });
+  };
+
+  const resetExperience = () => {
+    setStage("intro");
+    setAudioEnded(false);
+    setShowTooltip(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   };
 
   return (
     <>
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap');
-          .elegant-font { font-family: 'Playfair Display', serif; }
-        `}
-      </style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Marcellus&display=swap');
+        .honeymoon-title { font-family: 'Marcellus', serif; letter-spacing: 0.35em; text-transform: uppercase; text-shadow: 0px 2px 10px rgba(255, 255, 255, 0.4); margin: 0; }
+        .honeymoon-sub { font-family: 'Cormorant Garamond', serif; letter-spacing: 0.04em; font-style: italic; text-shadow: 0px 1px 4px rgba(255, 255, 255, 0.5); margin: 0; text-align: center; }
+        .vintage-vignette { position: fixed; inset: 0; z-index: 25; pointer-events: none; box-shadow: inset 0 0 100px rgba(42, 30, 15, 0.15); }
+      `}</style>
 
       <div
         style={{
           position: "fixed",
           inset: 0,
-          width: "100%",
-          height: "100%",
           overflow: "hidden",
           touchAction: "none",
-          backgroundColor: "#f8fafc",
+          backgroundColor: "#f2f5f8",
           backgroundImage: `url(${flowerBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
+          userSelect: "none",
         }}
-        className="select-none"
       >
+        <div className="vintage-vignette" />
+
         <div
           style={{
             position: "absolute",
@@ -595,22 +547,18 @@ export default function App() {
         </div>
 
         <div style={{ position: "absolute", inset: 0, zIndex: 20 }}>
-          <Canvas camera={{ position: [0, 0, 5], fov: 55 }}>
+          <Canvas camera={{ position: [0, 0, 5.2], fov: 55 }}>
             <Environment preset="studio" />
-
             <ambientLight intensity={1.5} />
             <pointLight position={[10, 10, 10]} intensity={1.8} />
             <directionalLight position={[-6, 8, 4]} intensity={1.2} />
-
-            <FallingPetals3D count={45} color="#f472b6" />
-            <FallingPetals3D count={45} color="#60a5fa" />
-
+            <FallingPetals3D count={30} color="#b83d3d" />
+            <FallingPetals3D count={35} color="#f472b6" />
             {stage === "intro" ? (
               <GiftBox onClick={handleOpenGift} />
             ) : (
               <ProceduralFlowerVase />
             )}
-
             <OrbitControls
               enableZoom={false}
               autoRotate={stage === "revealed"}
@@ -619,50 +567,258 @@ export default function App() {
           </Canvas>
         </div>
 
+        {/* 1. Top Left Absolute Audio Tooltip Anchor (CLICK ONLY) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "2rem",
+            left: "2rem",
+            zIndex: 50,
+            pointerEvents: "auto",
+          }}
+        >
+          <div
+            onClick={() => setShowTooltip(!showTooltip)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0.85rem",
+              borderRadius: "9999px",
+              backgroundColor: "rgba(255,255,255,0.55)",
+              backdropFilter: "blur(12px)",
+              cursor: "pointer",
+              boxShadow: "0 8px 32px rgba(29,42,68,0.12)",
+              position: "relative",
+              border: "1px solid rgba(255,255,255,0.6)",
+            }}
+          >
+            <Volume2 color="#223354" size={24} />
+            {showTooltip && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  marginTop: "1rem",
+                  left: 0,
+                  backgroundColor: "#223354",
+                  color: "white",
+                  padding: "0.75rem 1.25rem",
+                  borderRadius: "1rem",
+                  whiteSpace: "nowrap",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                }}
+              >
+                <span
+                  className="honeymoon-sub"
+                  style={{ fontSize: "0.95rem", fontWeight: "bold" }}
+                >
+                  Ustaw głośność na maksa! 🔊
+                </span>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "100%",
+                    left: "1.25rem",
+                    width: "0.75rem",
+                    height: "0.75rem",
+                    backgroundColor: "#223354",
+                    rotate: "45deg",
+                    transform: "translateY(50%)",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. Main Native Responsive UI Layer Overlay Container */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 30,
             pointerEvents: "none",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            padding: "2rem 1rem",
           }}
-          className="flex flex-col justify-between items-center p-6 md:p-12"
         >
-          {/* Frosted glass header panel with high-contrast elegant dark blue text layout */}
-          <header className="text-center mt-4 md:mt-8 bg-white/50 backdrop-blur-md px-8 py-6 rounded-3xl border border-white/60 shadow-[0_8px_32px_rgba(30,58,138,0.15)]">
-            <h1 className="elegant-font text-5xl md:text-7xl lg:text-8xl font-bold tracking-widest text-blue-900 drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)]">
+          {/* Header Panel Box */}
+          <header
+            style={{
+              backgroundColor: "rgba(255,255,255,0.45)",
+              backdropFilter: "blur(10px)",
+              padding: "1rem 2.5rem",
+              borderRadius: "1.25rem",
+              border: "1px solid rgba(255,255,255,0.55)",
+              boxShadow: "0 10px 35px rgba(29,42,68,0.05)",
+              textAlign: "center",
+              width: "fit-content",
+              maxWidth: "85%",
+              pointerEvents: "auto",
+              marginTop: "0.5rem",
+            }}
+          >
+            <h1
+              className="honeymoon-title"
+              style={{
+                color: "#b83d3d",
+                fontSize: "clamp(1.8rem, 5vw, 3.2rem)",
+                fontWeight: "400",
+              }}
+            >
               WIKTORIA
             </h1>
-            <p className="font-sans text-xs md:text-sm lg:text-base tracking-widest text-blue-800 mt-4 uppercase font-semibold drop-shadow-sm">
-              Wszystkiego najlepszego z okazji imienin!
-            </p>
           </header>
 
-          <div className="mb-8 md:mb-12">
+          {/* REPOSITIONED WISH FIELD */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width: "88%",
+              marginTop: "2rem",
+              pointerEvents: "none",
+            }}
+          >
+            <p
+              className="honeymoon-sub"
+              style={{
+                color: "#223354",
+                fontSize: "clamp(1.25rem, 3.5vw, 2rem)",
+                fontWeight: "700",
+                lineHeight: "1.35",
+              }}
+            >
+              Wszystkiego najlepszego z okazji imienin
+            </p>
+          </div>
+
+          {/* Bottom Interactive Trigger Area */}
+          <div
+            style={{
+              pointerEvents: "auto",
+              marginTop: "auto",
+              marginBottom: "1.5rem",
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
             {stage === "intro" ? (
               <div
-                className="animate-bounce pointer-events-auto cursor-pointer"
                 onClick={handleOpenGift}
+                style={{
+                  backgroundColor: "#223354",
+                  padding: "1.1rem 2.2rem",
+                  borderRadius: "9999px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  cursor: "pointer",
+                  boxShadow: "0 12px 40px rgba(34,51,84,0.25)",
+                }}
               >
-                <div className="bg-blue-600 backdrop-blur-xl px-8 py-4 rounded-full text-white flex items-center gap-3 shadow-[0_10px_40px_rgba(37,99,235,0.4)] border border-blue-400 hover:bg-blue-500 transition-all duration-300">
-                  <Gift className="w-6 h-6 text-yellow-300 animate-pulse" />
-                  <span className="font-sans font-medium tracking-wide text-base md:text-lg">
-                    Kliknij mnie, mam dla Ciebie prezent! ✨
-                  </span>
-                </div>
+                <Gift color="#fbbf24" size={22} />
+                <span
+                  className="honeymoon-sub"
+                  style={{
+                    color: "white",
+                    fontSize: "1.15rem",
+                    fontWeight: "bold",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Otwórz mój prezent dla Ciebie... ✨
+                </span>
               </div>
             ) : (
-              <div className="pointer-events-auto flex flex-col items-center text-center animate-fade-in-up">
-                <div className="bg-white/60 backdrop-blur-xl px-6 md:px-10 py-4 md:py-5 rounded-2xl flex flex-col items-center gap-2 shadow-[0_8px_32px_rgba(30,58,138,0.15)] border border-white/60">
-                  <div className="flex items-center gap-3">
-                    <Volume2 className="w-5 h-5 text-blue-600 animate-pulse" />
-                    <span className="font-sans font-semibold tracking-wide text-sm md:text-base text-blue-900">
-                      Twoja wiadomość głosowa gra... 🎵
-                    </span>
-                  </div>
-                  <p className="font-sans text-[10px] md:text-xs text-blue-700 font-medium mt-1 uppercase tracking-widest">
-                    Użyj myszki lub palca, aby obrócić bukiet!
-                  </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.65)",
+                    backdropFilter: "blur(12px)",
+                    padding: "0.85rem 2rem",
+                    borderRadius: "1.5rem",
+                    boxShadow: "0 12px 40px rgba(29,42,68,0.1)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    maxWidth: "85%",
+                  }}
+                >
+                  {audioEnded ? (
+                    <button
+                      onClick={resetExperience}
+                      style={{
+                        backgroundColor: "#b83d3d",
+                        color: "white",
+                        padding: "0.85rem 2rem",
+                        borderRadius: "9999px",
+                        border: "none",
+                        cursor: "pointer",
+                        boxShadow: "0 8px 25px rgba(184,61,61,0.35)",
+                      }}
+                    >
+                      <span
+                        className="honeymoon-sub"
+                        style={{ fontSize: "1.1rem", fontWeight: "bold" }}
+                      >
+                        Obejrzyj jeszcze raz! 🌸
+                      </span>
+                    </button>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.6rem",
+                      }}
+                    >
+                      <Volume2
+                        color="#223354"
+                        size={20}
+                        className="animate-pulse"
+                      />
+                      <span
+                        className="honeymoon-sub"
+                        style={{
+                          color: "#223354",
+                          fontSize: "1.05rem",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Twoja wiadomość głosowa gra 🎵
+                      </span>
+                    </div>
+                  )}
+
+                  {!audioEnded && (
+                    <p
+                      className="honeymoon-sub"
+                      style={{
+                        color: "#556688",
+                        fontSize: "0.75rem",
+                        fontWeight: "bold",
+                        textTransform: "uppercase",
+                        marginTop: "0.35rem",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      Obróć bukiet dotknięciem lub myszką
+                    </p>
+                  )}
                 </div>
               </div>
             )}
