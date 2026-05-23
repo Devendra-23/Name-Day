@@ -346,6 +346,8 @@ function ProceduralFlowerVase() {
       ctx.fillStyle = "#1d2a44"; // Honeymoon Navy contrast tone
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+      ctx.fillText("I will love you 'til the end of time,", 256, 150);
+      ctx.fillText("I would wait a million years.", 256, 185);
       ctx.fillText("Made with love", 256, 230);
       ctx.fillText("from Devvyyy", 256, 282);
     }
